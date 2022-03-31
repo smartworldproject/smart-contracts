@@ -1,0 +1,761 @@
+import { ethers } from "hardhat";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import chai from "chai";
+import chaiAsPromised from "chai-as-promised";
+import {
+  STT,
+  STTS,
+  Referral,
+  STT__factory,
+  STTS__factory,
+  Referral__factory,
+} from "../typechain";
+
+chai.use(chaiAsPromised);
+const { expect } = chai;
+
+const DAY = 3600;
+
+describe("Referral", () => {
+  let STT: STT;
+  let STTS: STTS;
+  let Ref: Referral;
+  let address: SignerWithAddress[],
+    addrs: SignerWithAddress[],
+    owner: SignerWithAddress,
+    addr1: SignerWithAddress,
+    addr2: SignerWithAddress,
+    addr3: SignerWithAddress;
+
+  before(async () => {
+    // 1
+    address = await ethers.getSigners();
+    [owner, addr1, addr2, addr3, ...addrs] = address;
+    // 2
+    const STTSTokenFactory = (await ethers.getContractFactory(
+      "STTS",
+      owner
+    )) as STTS__factory;
+    const STTokenFactory = (await ethers.getContractFactory(
+      "STT",
+      owner
+    )) as STT__factory;
+    const RefFactory = (await ethers.getContractFactory(
+      "Referral",
+      owner
+    )) as Referral__factory;
+    // 3
+    // @ts-ignore
+    STTS = await STTSTokenFactory.deploy();
+    await STTS.deployed();
+    // 4
+    STT = await STTokenFactory.deploy(
+      owner.address,
+      addr1.address,
+      STTS.address
+    );
+    await STT.deployed();
+    // 5
+    Ref = await RefFactory.deploy(STT.address);
+    await Ref.deployed();
+    // pass minter role to bank
+    await STT.passMinterRole(STT.address);
+    // authorize contract
+    await STT.authorizeContract(Ref.address);
+    await STT.connect(addr1).authorizeContract(Ref.address);
+    await STT.connect(addr2).authorizeContract(Ref.address);
+    // expect(await Ref.userExpired(owner.address)).to.eq(true);
+    await Ref.updateFreeze({ value: 700000 });
+    expect(await Ref.userBalance(owner.address)).to.eq(700000);
+    expect(await Ref.userExpired(owner.address)).to.eq(false);
+    // initial check
+    const initialSupply = await STT.totalSupply();
+    expect(initialSupply).to.eq(0);
+    expect(STT.address).to.properAddress;
+    expect(STT.address).to.properAddress;
+    expect(Ref.address).to.properAddress;
+  });
+  // 4
+  describe("Referral basics", () => {
+    it("initial Level price for freeze should be 700 trc", async () => {
+      let initialPriceLevel = await Ref.freezePrice();
+      expect(initialPriceLevel).to.eq(700000);
+      expect(await Ref.totalBalance()).to.eq(700000);
+    });
+    it("initial value for some variable", async () => {
+      let level = await Ref.userCompletedLevel(owner.address);
+      expect(level).to.eq(0);
+      // expect(await Ref.PERIOD_LENGTH()).to.eq(37 * helpers.DAYS);
+    });
+    it("shouldn't register new user without proper data", async () => {
+      await expect(
+        Ref.freeze(owner.address, { value: 700000 })
+      ).to.eventually.be.rejectedWith(Error, "Error::Refferal, User exist!");
+      await expect(
+        Ref.connect(addr1).withdrawInterest()
+      ).to.eventually.be.rejectedWith(
+        Error,
+        "Error::Refferal, User not exist!"
+      );
+      await expect(
+        Ref.connect(addr1).freeze(owner.address, { value: 699 })
+      ).to.eventually.be.rejectedWith(
+        Error,
+        "Error::Refferal, Incorrect Value!"
+      );
+    });
+    it("should get interest", async () => {
+      await Ref.withdrawInterest();
+      expect(await STT.balanceOf(owner.address)).to.eq(50);
+    });
+    it("should referral push into his correct position", async () => {
+      for (let i = 1; i < 7; i++) {
+        await Ref.connect(address[i]).freeze(owner.address, { value: 700000 });
+      }
+
+      const uLevels = await Ref.userReferralList(owner.address);
+      expect(uLevels).ordered.members([
+        3,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ]);
+
+      const uLevels1 = await Ref.userReferralList(addr1.address);
+      expect(uLevels1).ordered.members([
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ]);
+
+      const uLevels2 = await Ref.userReferralList(addr2.address);
+      expect(uLevels2).ordered.members([
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ]);
+
+      const uLevels3 = await Ref.userReferralList(addr3.address);
+      expect(uLevels3).ordered.members([
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ]);
+
+      for (let i = 7; i < 20; i++) {
+        await Ref.connect(address[i]).freeze(owner.address, { value: 700000 });
+      }
+
+      // for (let i = 7; i < 20; i++) {
+      //   await Ref.connect(address[i]).freeze(address[Math.floor(Math.random() * i)].address, {
+      //     value: 700000,
+      //   });
+      // }
+
+      const u2Levels = await Ref.userReferralList(owner.address);
+      expect(u2Levels).ordered.members([
+        3,
+        9,
+        7,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ]);
+      // LEVEL 1
+      const u2Levels1 = await Ref.userReferralList(address[1].address);
+      expect(u2Levels1).ordered.members([
+        3,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ]);
+
+      const u2Levels2 = await Ref.userReferralList(address[2].address);
+      expect(u2Levels2).ordered.members([
+        3,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ]);
+
+      const u2Levels3 = await Ref.userReferralList(address[3].address);
+      expect(u2Levels3).ordered.members([
+        3,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ]);
+      // LEVEL 2
+      const u2Levels4 = await Ref.userReferralList(address[4].address);
+      expect(u2Levels4).ordered.members([
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ]);
+
+      const u2Levels5 = await Ref.userReferralList(address[5].address);
+      expect(u2Levels5).ordered.members([
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ]);
+
+      const u2Levels6 = await Ref.userReferralList(address[6].address);
+      expect(u2Levels6).ordered.members([
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ]);
+
+      const u2Levels7 = await Ref.userReferralList(address[7].address);
+      expect(u2Levels7).ordered.members([
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ]);
+
+      const u2Levels8 = await Ref.userReferralList(address[8].address);
+      expect(u2Levels8).ordered.members([
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ]);
+
+      const u2Levels9 = await Ref.userReferralList(address[9].address);
+      expect(u2Levels9).ordered.members([
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ]);
+
+      const u2Levels10 = await Ref.userReferralList(address[10].address);
+      expect(u2Levels10).ordered.members([
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ]);
+
+      const u2Levels11 = await Ref.userReferralList(address[11].address);
+      expect(u2Levels11).ordered.members([
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ]);
+
+      const u2Levels12 = await Ref.userReferralList(address[12].address);
+      expect(u2Levels12).ordered.members([
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ]);
+      // LEVEL 3
+      const u2Levels13 = await Ref.userReferralList(address[13].address);
+      expect(u2Levels13).ordered.members([
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ]);
+
+      const u2Levels14 = await Ref.userReferralList(address[14].address);
+      expect(u2Levels14).ordered.members([
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ]);
+
+      const u2Levels15 = await Ref.userReferralList(address[15].address);
+      expect(u2Levels15).ordered.members([
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ]);
+    });
+    /*
+    it("should register new user", async () => {
+      await Ref.connect(addr1).freeze(owner.address, {value: 700000});
+      let totalBalance = await Ref.totalBalance();
+      expect(totalBalance.toNumber()).to.eq(1400000);
+
+      await Ref.withdrawInterest();
+      expect(await STT.balanceOf(owner.address)).to.eq(50 + 206158436164);
+
+      await Ref.connect(addr2).freeze(addr1.address, {value: 700000});
+      let totalBalance2 = await Ref.totalBalance();
+      expect(totalBalance2.toNumber()).to.eq(2100000);
+
+      await Ref.withdrawInterest();
+      expect(await STT.balanceOf(owner.address)).to.eq(50 + 206158436164 + 137438957253);
+
+      await Ref.connect(addr1).withdrawInterest();
+      expect(await STT.balanceOf(addr1.address)).to.eq(50 + 206158436164);
+
+      await network.provider.send("evm_increaseTime", [DAY * 5]);
+      await network.provider.send("evm_mine");
+
+      await Ref.connect(addr3).freeze(addr2.address, {value: 700000});
+      let totalBalance3 = await Ref.totalBalance();
+      expect(totalBalance3.toNumber()).to.eq(2800000);
+
+      await Ref.withdrawInterest();
+      expect(await STT.balanceOf(owner.address)).to.eq(
+        1650 + 206158436164 + 137438957253 + 687194786265
+      );
+
+      await Ref.connect(addr1).withdrawInterest();
+      expect(await STT.balanceOf(addr1.address)).to.eq(1650 + 206158436164 + 137438957253);
+
+      await Ref.connect(addr2).withdrawInterest();
+      expect(await STT.balanceOf(addr2.address)).to.eq(1600 + 206158436164);
+
+      for (let i = 0; i < 6; i++) {
+        await Ref.connect(addrs[i]).freeze(addr3.address, {value: 700000});
+      }
+
+      for (let i = 6; i < 12; i++) {
+        await Ref.connect(addrs[i]).freeze(addrs[4].address, {value: 700000});
+      }
+
+      const userInfo = await Ref.users(owner.address);
+      expect(userInfo.isExist).to.eq(true);
+
+      const user1Info = await Ref.users(addr1.address);
+      expect(user1Info.isExist).to.eq(true);
+      expect(user1Info.referralID).to.eq(1);
+
+      const user1balance = await Ref.userBalance(addr1.address);
+      expect(user1balance).to.eq(700000);
+
+      const user2Info = await Ref.users(addr2.address);
+      expect(user2Info.isExist).to.eq(true);
+      expect(user2Info.referralID).to.eq(2);
+
+      const u1Levels = await Ref.userReferralList(owner.address);
+      expect(u1Levels).ordered.members([1, 1, 1, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0]);
+
+      const u2Levels = await Ref.userReferralList(addr2.address);
+      expect(u2Levels).ordered.members([1, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+
+      const currentId = await Ref.userID();
+      expect(currentId).to.eq(16);
+    });
+
+    it("should withdraw TRON and STT", async () => {
+      await network.provider.send("evm_increaseTime", [DAY * 38]);
+      await network.provider.send("evm_mine");
+
+      await Ref.connect(addr1).withdrawInterest();
+
+      await Ref.connect(addrs[10]).unfreeze();
+
+      expect(await Ref.userBalance(addr1.address)).to.eq(700000);
+
+      expect(await Ref.userBalance(addrs[10].address)).to.eq(0);
+
+      expect(await STT.balanceOf(addr1.address)).to.not.eq(0);
+
+      expect(await STT.balanceOf(addrs[10].address)).to.not.eq(0);
+
+      const uAdLevels = await Ref.userReferralList(owner.address);
+      expect(uAdLevels).ordered.members([1, 1, 1, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0]);
+
+      const u1AdLevels = await Ref.userReferralList(addr1.address);
+      expect(u1AdLevels).ordered.members([1, 1, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+
+      const u2AdLevels = await Ref.userReferralList(addr2.address);
+      expect(u2AdLevels).ordered.members([1, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+
+      const u3AdLevels = await Ref.userReferralList(addr3.address);
+      expect(u3AdLevels).ordered.members([3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+
+      const u4AdLevels = await Ref.userReferralList(addrs[4].address);
+      expect(u4AdLevels).ordered.members([3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    });*/
+  });
+});
+/* 
+describe("Change Values", async () => {
+  let STT: STT;
+  let STBank: STBank;
+  let Ref: Referral;
+  let addrs: SignerWithAddress[],
+    owner: SignerWithAddress,
+    addr1: SignerWithAddress,
+    addr2: SignerWithAddress,
+    addr3: SignerWithAddress;
+
+  before(async () => {
+    // 1
+    [owner, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
+    // 2
+    const STTokenFactory = (await ethers.getContractFactory("STT", owner)) as STT__factory;
+    const STBankFactory = (await ethers.getContractFactory("STBank", owner)) as STBank__factory;
+    const RefFactory = (await ethers.getContractFactory("Referral", owner)) as Referral__factory;
+    // 3
+    STT = await STTokenFactory.deploy();
+    await STT.deployed();
+    // 4
+    STBank = await STBankFactory.deploy(
+      [owner.address, addr1.address, addr2.address],
+      STT.address,
+      {value: 1000000}
+    );
+    await STBank.deployed();
+    // 5
+    Ref = await RefFactory.deploy(STBank.address);
+    await Ref.deployed();
+    // pass minter role to bank
+    await STT.passMinterRole(STBank.address);
+    // authorize contract
+    await STBank.authorizeContract(Ref.address);
+    await STBank.connect(addr1).authorizeContract(Ref.address);
+    await STBank.connect(addr2).authorizeContract(Ref.address);
+    // initial check
+    const initialSupply = await STT.totalSupply();
+    expect(initialSupply).to.eq(0);
+    await Ref.updateFreeze({value: 700000});
+    expect(STT.address).to.properAddress;
+    expect(STBank.address).to.properAddress;
+    expect(Ref.address).to.properAddress;
+  });
+  describe("Change value and test again", () => {
+    it("should increase Level and price for freeze", async () => {
+      STBank.testMint(0, {value: 1000000});
+      let PriceLevel = await Ref.freezePrice();
+      expect(PriceLevel.toNumber()).to.eq(1400000);
+      let totalBalance = await Ref.totalBalance();
+      expect(totalBalance.toNumber()).to.eq(700000);
+    });
+    it("shouldn't allow to withdraw for outdated price", async () => {
+      await Ref.withdrawInterest();
+      expect(await STT.balanceOf(owner.address)).to.eq(50);
+    });
+    it("should register new user again", async () => {
+      let PriceLevel = await Ref.freezePrice();
+      await Ref.connect(addr1).freeze(owner.address, {value: PriceLevel});
+      let totalBalance = await Ref.totalBalance();
+      expect(totalBalance.toNumber()).to.eq(2100000);
+
+      await Ref.connect(addr2).freeze(addr1.address, {value: PriceLevel});
+      let totalBalance2 = await Ref.totalBalance();
+      expect(totalBalance2.toNumber()).to.eq(3500);
+
+      await Ref.connect(addr3).freeze(addr2.address, {value: PriceLevel});
+      let totalBalance3 = await Ref.totalBalance();
+      expect(totalBalance3.toNumber()).to.eq(4900);
+
+      for (let i = 0; i < 6; i++) {
+        await Ref.connect(addrs[i]).freeze(addr3.address, {value: 1400000});
+      }
+
+      for (let i = 6; i < 12; i++) {
+        await Ref.connect(addrs[i]).freeze(addrs[4].address, {value: 1400000});
+      }
+
+      const userInfo = await Ref.users(owner.address);
+      expect(userInfo.isExist).to.eq(true);
+
+      const user1Info = await Ref.users(addr1.address);
+      expect(user1Info.isExist).to.eq(true);
+      expect(user1Info.referralID).to.eq(1);
+
+      const user1balance = await Ref.userBalance(addr1.address);
+      expect(user1balance).to.eq(1400000);
+
+      const user2Info = await Ref.users(addr3.address);
+      expect(user2Info.isExist).to.eq(true);
+      expect(user2Info.referralID).to.eq(3);
+
+      const u1Levels = await Ref.userReferralList(owner.address);
+      expect(u1Levels).ordered.members([1, 1, 1, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0]);
+
+      const u2Levels = await Ref.userReferralList(addr2.address);
+      expect(u2Levels).ordered.members([1, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+
+      const currentId = await Ref.userID();
+      expect(currentId).to.eq(16);
+    });
+
+    it("should withdraw amount equal to referals number", async () => {
+      const uAdLevels = await Ref.userReferralList(owner.address);
+      expect(uAdLevels).ordered.members([1, 1, 1, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0]);
+      const interest = await Ref.calculateInterest(owner.address);
+      expect(interest[1].toNumber()).to.eq(0);
+
+      await Ref.updateFreeze({value: 700000});
+      const interest1 = await Ref.calculateInterest(owner.address);
+      expect(interest1[1].toNumber()).to.eq(0);
+
+      const u1AdLevels = await Ref.userReferralList(addr1.address);
+      expect(u1AdLevels).ordered.members([1, 1, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+
+      const u2AdLevels = await Ref.userReferralList(addr2.address);
+      expect(u2AdLevels).ordered.members([1, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+
+      const u3AdLevels = await Ref.userReferralList(addr3.address);
+      expect(u3AdLevels).ordered.members([3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+
+      const u4AdLevels = await Ref.userReferralList(addrs[4].address);
+      expect(u4AdLevels).ordered.members([3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    });
+    it("should withdraw TRON and STT again", async () => {
+      await network.provider.send("evm_increaseTime", [DAY * 5]);
+      await network.provider.send("evm_mine");
+
+      await Ref.connect(addrs[10]).withdrawInterest();
+
+      expect(await STT.balanceOf(addrs[10].address)).to.eq(1600);
+
+      await network.provider.send("evm_increaseTime", [DAY * 34]);
+      await network.provider.send("evm_mine");
+
+      await Ref.connect(addrs[10]).withdrawInterest();
+
+      expect(await STT.balanceOf(addrs[10].address)).to.eq(6871947673600);
+
+      await Ref.connect(addr1).unfreeze();
+
+      await Ref.connect(addrs[10]).unfreeze();
+
+      expect(await Ref.userBalance(addr1.address)).to.eq(0);
+
+      expect(await Ref.userBalance(addrs[10].address)).to.eq(0);
+
+      expect(await STT.balanceOf(addr1.address)).to.not.eq(0);
+
+      expect(await STT.balanceOf(addrs[10].address)).to.not.eq(0);
+    });
+  });
+}); */
