@@ -7,6 +7,7 @@
     "build": "npm run clean && npm run compile",
     "clean": "npx hardhat clean",
     "compile": "npx hardhat compile",
+    "migrate": "npx hardhat run migrate",
     "test": "npx hardhat test",
     "testStt": "npm run test ./test/testStt.ts",
     "testStts": "npm run test ./test/testStts.ts",

@@ -1,0 +1,9 @@
+{
+  "OWN": "Only From Owner!",
+  "BLK": "User blackListed!",
+  "ETH": "BNB transfer Failed!",
+  "VAL": "Value is low",
+  "REF": "Referrer not exist!",
+  "USR": "User exist!",
+  "REN": "No re-entrancy!"
+}

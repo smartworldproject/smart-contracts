@@ -4,7 +4,7 @@ import { HardhatUserConfig } from "hardhat/types";
 
 import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-ethers";
-// import "@typechain/hardhat";
+import "@typechain/hardhat";
 import "hardhat-abi-exporter";
 
 // npx hardhat verify 0xB5C15C64E54b38CC3367682A1A1675E987678028 --constructor-args args.js
@@ -12,6 +12,7 @@ import "hardhat-abi-exporter";
 // import "solidity-coverage";
 
 const ACCOUNT_PRIVATE_KEY = process.env.ACCOUNT_PRIVATE_KEY!; // well known private key
+const MORALIS_API_KEY = process.env.MORALIS_API_KEY;
 const BINANCE_API_KEY = process.env.BINANCE_API_KEY;
 const INFURA_KOVAN = process.env.INFURA_KOVAN;
 const ALCHEMY_KEY = process.env.ALCHEMY_KEY;
@@ -29,7 +30,7 @@ const config: HardhatUserConfig = {
       },
     },
     moralis: {
-      url: "https://speedy-nodes-nyc.moralis.io/7692f1448b78feec70571765/bsc/mainnet",
+      url: `https://speedy-nodes-nyc.moralis.io/${MORALIS_API_KEY}/bsc/mainnet`,
       chainId: 56,
       gasPrice: 20000000000,
       accounts: [ACCOUNT_PRIVATE_KEY],
