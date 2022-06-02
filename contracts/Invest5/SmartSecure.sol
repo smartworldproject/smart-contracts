@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 abstract contract SmartSecure {
-  event AddedBlackList(address user);
-  event RemovedBlackList(address user);
+  event AddedBlackList(address indexed user);
+  event RemovedBlackList(address indexed user);
 
   bool internal locked;
 

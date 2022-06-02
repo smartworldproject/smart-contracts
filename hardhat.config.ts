@@ -4,10 +4,10 @@ import { HardhatUserConfig } from "hardhat/types";
 
 import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-ethers";
-import "@typechain/hardhat";
+// import "@typechain/hardhat";
 import "hardhat-abi-exporter";
 
-// npx hardhat verify 0xB5C15C64E54b38CC3367682A1A1675E987678028 --constructor-args args.js
+// npx hardhat verify address --constructor-args args.js
 // TODO: reenable solidity-coverage when it works
 // import "solidity-coverage";
 

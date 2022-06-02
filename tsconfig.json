@@ -2,19 +2,19 @@
   "compilerOptions": {
     "strict": true,
     "target": "es5",
-    "outDir": "dist",
+    "outDir": "Nodes/dist",
     "module": "commonjs",
     "esModuleInterop": true,
     "resolveJsonModule": true
   },
   "include": [
     "./scripts",
-    "./migrate",
+    "Nodes/migrates",
+    "Nodes/events",
     "./test",
     "test/.testReferral",
     "test/helpers.ts",
-    "test/testStBank.ts",
-    "migrate/migrate.ts"
+    "test/testStBank.ts"
   ],
   "files": ["./hardhat.config.ts"]
 }
