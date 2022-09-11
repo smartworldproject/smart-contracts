@@ -1,0 +1,16 @@
+{
+  "TREE::OWN": "Only From Owner!",
+  "TREE::ONC": "Only from contract!",
+  "TREE::BLK": "User blackListed!",
+  "TREE::TKN": "Token transfer failed!",
+  "TREE::ETH": "BNB transfer Failed!",
+  "TREE::VAL": "Value is low",
+  "TREE::INF": "Investment failed!",
+  "TREE::REF": "Referrer not exist!",
+  "TREE::USR": "User exist!",
+  "TREE::LCK": "No re-entrancy!",
+  "TREE::NEX": "No re-entrancy!",
+  "TREE::LOW": "Withdraw is low!",
+  "TREE::WFA": "Withdraw Failed!",
+  "TREE::NUP": "Not Upgradable!"
+}

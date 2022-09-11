@@ -6,3 +6,4 @@ contracts/FlokiToken/
 artifacts/
 coverage*
 .env
+dist/

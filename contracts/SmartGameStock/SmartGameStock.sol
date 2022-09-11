@@ -27,7 +27,7 @@ contract SmartGameStock is SmartSecure {
 
   function buySmartRobotStock(uint256 tokenAmount) public {
     uint256 busdAmount = tokenAmount.mul(ROBOTS_STOCK_PRICE);
-    require(busdBalanceOf(_msgSender()) > busdAmount, "Error::GameStock, Not enough BUSD!");
+    require(busdBalanceOf(_msgSender()) >= busdAmount, "Error::GameStock, Not enough BUSD!");
 
     _safeTransferFrom(BUSD, _msgSender(), owner, busdAmount);
 
@@ -38,7 +38,7 @@ contract SmartGameStock is SmartSecure {
 
   function buySmartCarStock(uint256 tokenAmount) public {
     uint256 busdAmount = tokenAmount.mul(CARS_STOCK_PRICE);
-    require(busdBalanceOf(_msgSender()) > busdAmount, "Error::GameStock, Not enough BUSD!");
+    require(busdBalanceOf(_msgSender()) >= busdAmount, "Error::GameStock, Not enough BUSD!");
 
     _safeTransferFrom(BUSD, _msgSender(), owner, busdAmount);
 
