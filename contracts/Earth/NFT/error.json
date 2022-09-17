@@ -1,0 +1,16 @@
+{
+  "NFT::OWN": "Only From Owner!",
+  "NFT::ONC": "Only from contract!",
+  "NFT::BLK": "User blackListed!",
+  "NFT::TKN": "Token transfer failed!",
+  "NFT::ETH": "BNB transfer Failed!",
+  "NFT::VAL": "Value is low",
+  "NFT::INF": "Investment failed!",
+  "NFT::REF": "Referrer not exist!",
+  "NFT::USR": "User exist!",
+  "NFT::LCK": "No re-entrancy!",
+  "NFT::NEX": "No re-entrancy!",
+  "NFT::LOW": "Withdraw is low!",
+  "NFT::WFA": "Withdraw Failed!",
+  "NFT::NUP": "Not Upgradable!"
+}

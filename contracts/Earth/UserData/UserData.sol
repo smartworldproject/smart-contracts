@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.15;
+pragma solidity ^0.8.7;
 
 import "./Math.sol";
 import "./Secure.sol";
@@ -11,7 +11,7 @@ contract UserData is IUserData, Secure {
 
   mapping(address => UserStruct) public override users;
 
-  function notBlacklisted(address user) external view returns (bool) {
+  function notBlacklisted(address user) external view override returns (bool) {
     return !blacklist[user];
   }
 
@@ -94,10 +94,7 @@ contract UserData is IUserData, Secure {
     }
   }
 
-  function addGiftAmountList(address[] memory user, uint256[] memory gift)
-    external
-    onlyOwner
-  {
+  function addGiftAmountList(address[] memory user, uint256[] memory gift) external onlyOwner {
     for (uint8 i = 0; i < user.length; i++) {
       addGiftAmount(user[i], gift[i]);
     }
@@ -120,20 +117,12 @@ contract UserData is IUserData, Secure {
   }
 
   // Modifier functions ----------------------------------------------------------
-  function addGiftAmount(address user, uint256 value)
-    public
-    override
-    onlyContract
-  {
+  function addGiftAmount(address user, uint256 value) public override onlyContract {
     changeGiftAmount(user, users[user].giftAmount.add(value));
     emit GiftReceived(user, value);
   }
 
-  function addRefAmount(address user, uint256 value)
-    public
-    override
-    onlyContract
-  {
+  function addRefAmount(address user, uint256 value) public override onlyContract {
     changeRefAmount(user, users[user].refAmount.add(value));
     emit ReferralReceived(user, tx.origin, value);
   }
@@ -156,35 +145,19 @@ contract UserData is IUserData, Secure {
     return users[user].invest[index].reward == value;
   }
 
-  function changeGiftAmount(address user, uint256 value)
-    public
-    override
-    onlyContract
-  {
+  function changeGiftAmount(address user, uint256 value) public override onlyContract {
     users[user].giftAmount = value.toUint64();
   }
 
-  function changeRefAmount(address user, uint256 value)
-    public
-    override
-    onlyContract
-  {
+  function changeRefAmount(address user, uint256 value) public override onlyContract {
     users[user].refAmount = value.toUint64();
   }
 
-  function changeLatestWithdraw(address user, uint256 time)
-    external
-    override
-    onlyContract
-  {
+  function changeLatestWithdraw(address user, uint256 time) external override onlyContract {
     users[user].latestWithdraw = time.toUint64();
   }
 
-  function changeReferrer(address user, address ref)
-    external
-    override
-    onlyContract
-  {
+  function changeReferrer(address user, address ref) external override onlyContract {
     users[user].referrer = ref;
   }
 
@@ -200,12 +173,7 @@ contract UserData is IUserData, Secure {
     return users[user].latestWithdraw == lw;
   }
 
-  function resetAfterWithdraw(address user)
-    external
-    override
-    onlyContract
-    returns (bool)
-  {
+  function resetAfterWithdraw(address user) external override onlyContract returns (bool) {
     users[user].refAmount = 0;
     users[user].giftAmount = 0;
     users[user].latestWithdraw = block.timestamp.toUint64();
@@ -220,11 +188,7 @@ contract UserData is IUserData, Secure {
     delete users[user].invest;
   }
 
-  function deleteUserInvestIndex(address user, uint256 index)
-    external
-    override
-    onlyContract
-  {
+  function deleteUserInvestIndex(address user, uint256 index) external override onlyContract {
     delete users[user].invest[index];
   }
 
@@ -258,21 +222,11 @@ contract UserData is IUserData, Secure {
     return users[user].referrer;
   }
 
-  function latestWithdraw(address user)
-    external
-    view
-    override
-    returns (uint256)
-  {
+  function latestWithdraw(address user) external view override returns (uint256) {
     return users[user].latestWithdraw;
   }
 
-  function investDetails(address user)
-    public
-    view
-    override
-    returns (Invest[] memory)
-  {
+  function investDetails(address user) public view override returns (Invest[] memory) {
     return users[user].invest;
   }
 
@@ -299,12 +253,7 @@ contract UserData is IUserData, Secure {
     endTime = startTime.add(period);
   }
 
-  function maxPeriod(address user)
-    public
-    view
-    override
-    returns (uint256 maxTime)
-  {
+  function maxPeriod(address user) public view override returns (uint256 maxTime) {
     uint256 userIvestLength = depositNumber(user);
     if (userIvestLength > 0) {
       for (uint256 i = 0; i < userIvestLength; i++) {
@@ -326,12 +275,7 @@ contract UserData is IUserData, Secure {
     }
   }
 
-  function investIsExpired(address user, uint256 index)
-    public
-    view
-    override
-    returns (bool)
-  {
+  function investIsExpired(address user, uint256 index) public view override returns (bool) {
     return investExpireTime(user, index) <= block.timestamp;
   }
 }

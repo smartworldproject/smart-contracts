@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.15;
+pragma solidity ^0.8.7;
 
 // CAUTION
 // This version of Math should only be used with Solidity 0.8 or later,
@@ -23,14 +23,6 @@ library Math {
 
   function mod(uint256 a, uint256 b) internal pure returns (uint256) {
     return a % b;
-  }
-
-  function mulDecimals(uint256 a, uint256 b) internal pure returns (uint256) {
-    return mul(a, 10**b);
-  }
-
-  function divDecimals(uint256 a, uint256 b) internal pure returns (uint256) {
-    return div(a, 10**b);
   }
 
   function addHour(uint256 a) internal pure returns (uint256) {

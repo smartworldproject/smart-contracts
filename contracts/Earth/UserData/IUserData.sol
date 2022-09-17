@@ -1,12 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.15;
+pragma solidity ^0.8.7;
 
 interface IUserData {
-  event Register(
-    address indexed user,
-    address indexed ref,
-    uint256 indexed gift
-  );
+  event Register(address indexed user, address indexed ref, uint256 indexed gift);
   event Investment(address indexed user, uint256 value);
   event GiftReceived(address indexed user, uint256 value);
   event ReferralReceived(address indexed user, address from, uint256 value);
@@ -40,9 +36,7 @@ interface IUserData {
     uint256 gift
   ) external returns (bool);
 
-  function investment(address user, Invest memory invest)
-    external
-    returns (bool);
+  function investment(address user, Invest memory invest) external returns (bool);
 
   function payReferrer(
     address lastRef,
@@ -101,10 +95,7 @@ interface IUserData {
       uint64 latestWithdraw
     );
 
-  function calculateHourly(address user, uint256 time)
-    external
-    view
-    returns (uint256 rewards);
+  function calculateHourly(address user, uint256 time) external view returns (uint256 rewards);
 
   function exist(address user) external view returns (bool);
 
@@ -129,15 +120,9 @@ interface IUserData {
 
   function maxPeriod(address user) external view returns (uint256);
 
-  function investExpireTime(address user, uint256 index)
-    external
-    view
-    returns (uint256);
+  function investExpireTime(address user, uint256 index) external view returns (uint256);
 
-  function investIsExpired(address user, uint256 index)
-    external
-    view
-    returns (bool);
+  function investIsExpired(address user, uint256 index) external view returns (bool);
 
   function notBlacklisted(address user) external view returns (bool);
 }

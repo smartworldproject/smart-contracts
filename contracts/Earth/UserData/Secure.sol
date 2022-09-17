@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.15;
+pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -12,8 +12,7 @@ abstract contract Secure is Ownable {
   mapping(address => bool) public blacklist;
   mapping(address => bool) public contracts;
 
-  bytes4 private constant TRANSFER =
-    bytes4(keccak256(bytes("transfer(address,uint256)")));
+  bytes4 private constant TRANSFER = bytes4(keccak256(bytes("transfer(address,uint256)")));
 
   modifier onlyContract() {
     require(contracts[_msgSender()], "USER::ONC");
@@ -21,7 +20,7 @@ abstract contract Secure is Ownable {
   }
 
   function _safeTransferETH(address to, uint256 value) internal {
-    (bool success, ) = to.call{ gas: 23000, value: value }("");
+    (bool success, ) = to.call{gas: 23000, value: value}("");
 
     require(success, "USER::ETH");
   }
@@ -34,10 +33,7 @@ abstract contract Secure is Ownable {
     (bool success, bytes memory data) = token.call(
       abi.encodeWithSelector(TRANSFER, to, value)
     );
-    require(
-      success && (data.length == 0 || abi.decode(data, (bool))),
-      "USER::TTF"
-    );
+    require(success && (data.length == 0 || abi.decode(data, (bool))), "USER::TTF");
   }
 
   function addListBlacklist(address[] memory users) external onlyContract {

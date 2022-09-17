@@ -1,9 +1,9 @@
 import { config as dotEnvConfig } from "dotenv";
-dotEnvConfig();
 import { HardhatUserConfig } from "hardhat/types";
+dotEnvConfig();
 
-import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-ethers";
+import "@nomiclabs/hardhat-etherscan";
 import "@typechain/hardhat";
 import "hardhat-abi-exporter";
 

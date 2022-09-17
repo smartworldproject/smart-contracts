@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.15;
+pragma solidity ^0.8.7;
 
 // CAUTION
 // This version of Math should only be used with Solidity 0.8 or later,

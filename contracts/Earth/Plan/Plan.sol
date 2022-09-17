@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.15;
+pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./IPlan.sol";
@@ -81,12 +81,7 @@ contract Plan is IPlan, Ownable {
     return value.sub(fee);
   }
 
-  function valuePlusBonus(uint256 value, bool max)
-    public
-    view
-    override
-    returns (uint256)
-  {
+  function valuePlusBonus(uint256 value, bool max) public view override returns (uint256) {
     uint256 bonus = value.mul(max ? BONUS_MAX : BONUS_MIN).div(HUNDRED_PERCENT);
     return value.add(bonus);
   }
@@ -114,22 +109,12 @@ contract Plan is IPlan, Ownable {
     return monthlyReward(value).div(720);
   }
 
-  function freeDailyReward(uint256 value)
-    public
-    view
-    override
-    returns (uint256)
-  {
+  function freeDailyReward(uint256 value) public view override returns (uint256) {
     if (value < MINIMUM_INVEST) return 0;
     return value.mul(REWARD_PERCENT).div(HUNDRED_PERCENT);
   }
 
-  function freeHourlyReward(uint256 value)
-    public
-    view
-    override
-    returns (uint256)
-  {
+  function freeHourlyReward(uint256 value) public view override returns (uint256) {
     return freeDailyReward(value).div(24);
   }
 
