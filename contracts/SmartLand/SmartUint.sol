@@ -4,7 +4,7 @@ pragma solidity ^0.8.7;
 // CAUTION
 // This version of Math should only be used with Solidity 0.8 or later,
 // because it relies on the compiler's built in overflow checks.
-library Math {
+library SmartUint {
   function add(uint256 a, uint256 b) internal pure returns (uint256) {
     return a + b;
   }
@@ -25,11 +25,26 @@ library Math {
     return a % b;
   }
 
-  function mulDecimals(uint256 a, uint256 b) internal pure returns (uint256) {
-    return mul(a, 10**b);
+  function percent(uint256 a, uint256 b) internal pure returns (uint256) {
+    return (a * b) / 100;
   }
 
-  function divDecimals(uint256 a, uint256 b) internal pure returns (uint256) {
-    return div(a, 10**b);
+  function toString(uint256 value) internal pure returns (string memory) {
+    if (value == 0) {
+      return "0";
+    }
+    uint256 temp = value;
+    uint256 digits;
+    while (temp != 0) {
+      digits++;
+      temp /= 10;
+    }
+    bytes memory buffer = new bytes(digits);
+    while (value != 0) {
+      digits -= 1;
+      buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
+      value /= 10;
+    }
+    return string(buffer);
   }
 }

@@ -14,11 +14,11 @@ import "hardhat-abi-exporter";
 const ACCOUNT_PRIVATE_KEY = process.env.ACCOUNT_PRIVATE_KEY!; // well known private key
 const MORALIS_API_KEY = process.env.MORALIS_API_KEY;
 const BINANCE_API_KEY = process.env.BINANCE_API_KEY;
-const INFURA_KOVAN = process.env.INFURA_KOVAN;
+const INFURA_API_KEY = process.env.INFURA_API_KEY;
 const ALCHEMY_KEY = process.env.ALCHEMY_KEY;
 
 const config: HardhatUserConfig = {
-  defaultNetwork: "mainnet",
+  defaultNetwork: "testnet",
   networks: {
     localhost: {
       url: "http://127.0.0.1:8545",
@@ -48,17 +48,22 @@ const config: HardhatUserConfig = {
       accounts: [ACCOUNT_PRIVATE_KEY],
     },
     rinkeby: {
-      url: `https://rinkeby.infura.io/v3/${INFURA_KOVAN}`,
+      url: `https://rinkeby.infura.io/v3/${INFURA_API_KEY}`,
+      accounts: [ACCOUNT_PRIVATE_KEY],
+    },
+    ropsten: {
+      url: `https://ropsten.infura.io/v3/${INFURA_API_KEY}`,
       accounts: [ACCOUNT_PRIVATE_KEY],
     },
     kovan: {
-      url: `https://kovan.infura.io/v3/${INFURA_KOVAN}`,
+      url: `https://kovan.infura.io/v3/${INFURA_API_KEY}`,
       accounts: [ACCOUNT_PRIVATE_KEY],
     },
     coverage: {
       url: "http://127.0.0.1:8555", // Coverage launches its own ganache-cli client
     },
   },
+
   abiExporter: {
     path: "./data/abi",
     clear: true,
@@ -82,6 +87,7 @@ const config: HardhatUserConfig = {
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://etherscan.io/
+    // apiKey: process.env.ETHERSCAN_API_KEY,
     apiKey: BINANCE_API_KEY,
   },
 };

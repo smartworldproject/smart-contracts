@@ -5,7 +5,6 @@
   "NFT::TKN": "Token transfer failed!",
   "NFT::ETH": "BNB transfer Failed!",
   "NFT::VAL": "Value is low",
-  "NFT::INF": "Investment failed!",
   "NFT::REF": "Referrer not exist!",
   "NFT::USR": "User exist!",
   "NFT::LCK": "No re-entrancy!",
