@@ -51,6 +51,7 @@ const config: HardhatUserConfig = {
       url: `https://rinkeby.infura.io/v3/${INFURA_API_KEY}`,
       accounts: [ACCOUNT_PRIVATE_KEY],
     },
+    // deprecated
     ropsten: {
       url: `https://ropsten.infura.io/v3/${INFURA_API_KEY}`,
       accounts: [ACCOUNT_PRIVATE_KEY],

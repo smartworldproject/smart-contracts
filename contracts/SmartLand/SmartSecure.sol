@@ -24,7 +24,7 @@ abstract contract SmartSecure is Context {
   bool internal PAUSED;
 
   string internal BASE_URL =
-    "ipfs://bafybeigqzp3iulfmhrnrrhssfbehzompxkv5g4xgsghcjzn3jic5bkukca/";
+    "ipfs://bafybeifbo77c5iel6u7c6t4dyerckgf2hq4qprr5rp6vj5f332kvzay4vm/";
   string internal BASE_EXT = ".json";
 
   address public owner;
