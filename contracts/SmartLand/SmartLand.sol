@@ -2,23 +2,11 @@
 pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./SmartSecure.sol";
 import "./SmartUint.sol";
 
 contract SmartLand is ERC721Enumerable, SmartSecure {
   using SmartUint for uint256;
-
-  event ReferralReceived(address indexed user, address from, uint256 value);
-
-  struct UserStruct {
-    address referrer;
-    uint256 refAmounts;
-  }
-
-  mapping(address => UserStruct) public users;
-
-  uint256 maxSupply = 10_000;
 
   constructor() ERC721("SmartLand", "STL") {
     owner = msg.sender;
@@ -34,50 +22,33 @@ contract SmartLand is ERC721Enumerable, SmartSecure {
     uint256 tokenId,
     bytes memory data
   ) public payable {
-    require(tokenId < maxSupply && !_exists(tokenId), "Error::SmartLand, NFT does not exist!");
-    require(msg.value >= LAND_PRICE, "Error::SmartLand, Incorrect Value!");
+    require(isMintable(tokenId), "Error::SmartLand, Invalid Token ID");
+    require(msg.value >= LAND_PRICE, "Error::SmartLand, Insufficient Funds");
     require(data.length == 16, "Error::SmartLand, Incorrect Data!");
 
-    transferToOwner();
+    uint256 refAmount = 0;
+
+    if (!isUser(_msgSender()) && isUser(referrer)) {
+      refAmount = LAND_PRICE.percent(REFERRAL_PERCENT);
+      _safeTransferETH(referrer, refAmount);
+
+      emit ReferralReceived(referrer, _msgSender(), refAmount);
+    }
 
     landData[tokenId] = data;
 
-    if (notExist(_msgSender())) {
-      if (referrer == address(0)) {
-        users[_msgSender()].referrer = address(1);
-      } else if (exist(referrer)) {
-        users[_msgSender()].referrer = referrer;
-
-        payReferrer(referrer);
-      } else {
-        revert("Error::SmartLand, Referrer does not exist!");
-      }
-    }
+    _safeTransferETH(owner, msg.value.sub(refAmount));
 
     _safeMint(msg.sender, tokenId);
   }
 
-  function payReferrer(address referrer) private {
-    uint256 refAmount = LAND_PRICE.percent(REFERRAL_PERCENT);
-    users[referrer].refAmounts = users[referrer].refAmounts.add(refAmount);
-
-    emit ReferralReceived(referrer, _msgSender(), refAmount);
+  function isMintable(uint256 tokenId) public view returns (bool) {
+    return !_exists(tokenId) && tokenId > 0 && tokenId <= 10000;
   }
 
-  function withdrawInterest() public nonReentrant {
-    uint256 amount = users[_msgSender()].refAmounts;
-    require(amount > 0, "Error::SmartLand, Zero Interest!");
-
-    users[_msgSender()].refAmounts = 0;
-    _safeTransferETH(_msgSender(), amount);
-  }
-
-  function exist(address account) public view returns (bool) {
-    return users[account].referrer != address(0);
-  }
-
-  function notExist(address account) public view returns (bool) {
-    return users[account].referrer == address(0);
+  function isUser(address user) public view returns (bool) {
+    if (user == address(0)) return false;
+    return balanceOf(user) > 0 && !blacklist[user];
   }
 
   function _beforeTokenTransfer(
@@ -85,14 +56,10 @@ contract SmartLand is ERC721Enumerable, SmartSecure {
     address to,
     uint256 tokenId
   ) internal override {
-    if (from == address(0)) {
-      require(totalSupply() < maxSupply, "Error::SmartLand, Max Supply!");
-    } else {
+    if (from != address(0)) {
       require(!PAUSED, "Error::SmartLand, Transfer Paused!");
     }
 
     super._beforeTokenTransfer(from, to, tokenId);
   }
-
-  receive() external payable {}
 }

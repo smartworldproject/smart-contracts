@@ -8,6 +8,7 @@ abstract contract SmartSecure is Context {
   event Unpaused(address account);
   event AddedBlackList(address indexed user);
   event RemovedBlackList(address indexed user);
+  event ReferralReceived(address indexed user, address from, uint256 value);
 
   modifier onlyOwner() {
     require(owner == _msgSender(), "Error::SmartSecure, Only from Owner");
@@ -19,37 +20,23 @@ abstract contract SmartSecure is Context {
     _;
   }
 
-  bool internal LOCKED;
-
   bool internal PAUSED;
 
   string internal BASE_URL =
-    "ipfs://bafybeifbo77c5iel6u7c6t4dyerckgf2hq4qprr5rp6vj5f332kvzay4vm/";
+    "ipfs://bafybeihet3fxfc7pua5bclg37aafgoohbxxsvobfohxcdk7mljz2l22uoi/";
   string internal BASE_EXT = ".json";
 
   address public owner;
 
   address public gameMaster;
 
-  uint256 public LAND_PRICE = 1 ether;
+  uint256 public LAND_PRICE = 500000000000000000;
 
   uint256 public REFERRAL_PERCENT = 25;
 
   mapping(address => bool) public blacklist;
 
   mapping(uint256 => bytes) public landData;
-
-  modifier nonReentrant() {
-    require(!blacklist[_msgSender()], "Error::SmartSecure, User blacklisted!");
-    require(!LOCKED, "Error::SmartSecure, Locked!");
-    LOCKED = true;
-    _;
-    LOCKED = false;
-  }
-
-  function transferToOwner() internal {
-    _safeTransferETH(owner, LAND_PRICE);
-  }
 
   function _safeTransferETH(address to, uint256 value) internal {
     (bool success, ) = to.call{gas: 23000, value: value}("");
@@ -58,17 +45,9 @@ abstract contract SmartSecure is Context {
   }
 
   //only owner
-  function lock() public onlyOwner {
-    LOCKED = true;
-  }
-
   function pause() public onlyOwner {
     PAUSED = true;
     emit Paused(_msgSender());
-  }
-
-  function unLock() public onlyOwner {
-    LOCKED = false;
   }
 
   function unpause() public onlyOwner {
@@ -125,9 +104,5 @@ abstract contract SmartSecure is Context {
   function removeBlackList(address user) external onlyOwner {
     blacklist[user] = false;
     emit RemovedBlackList(user);
-  }
-
-  function withdrawBnb(uint256 value) external onlyOwner {
-    payable(owner).transfer(value);
   }
 }
